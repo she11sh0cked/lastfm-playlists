@@ -1,0 +1,23 @@
+{
+  "name": "lastfm-playlists",
+  "module": "index.ts",
+  "devDependencies": {
+    "@types/lodash": "^4.14.198",
+    "@types/spotify-web-api-node": "^5.0.7",
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "dev": "bun run --watch index.ts | pino-pretty",
+    "start": "bun run index.ts | pino-pretty"
+  },
+  "type": "module",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "pino": "^8.15.1",
+    "pino-pretty": "^10.2.0",
+    "spotify-web-api-node": "^5.0.2"
+  }
+}
