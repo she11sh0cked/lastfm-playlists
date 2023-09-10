@@ -74,6 +74,10 @@ async function getAuthViaFile(path: string) {
   spotify.setAccessToken(data.access_token);
   spotify.setRefreshToken(data.refresh_token);
 
+  await spotify.refreshAccessToken().then((data) => {
+    spotify.setAccessToken(data.body.access_token);
+  });
+
   return data;
 }
 
@@ -82,13 +86,15 @@ export async function getAuth(path?: string) {
     return await getAuthViaUrl();
   }
 
+  let data;
+
   try {
-    return await getAuthViaFile(path);
+    data = await getAuthViaFile(path);
   } catch (err) {
-    const data = await getAuthViaUrl();
-
-    Bun.write(path, JSON.stringify(data));
-
-    return data;
+    data = await getAuthViaUrl();
   }
+
+  Bun.write(path, JSON.stringify(data, null, 2));
+
+  return data;
 }
