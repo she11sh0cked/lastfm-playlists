@@ -1,5 +1,3 @@
-import { deepRemoveBy } from "../utils/common";
-
 export type LastFMSong = {
   url: string;
   duration: number;
@@ -51,8 +49,5 @@ export async function getPlaylist(
     page++;
   } while (songs.size < (amount ?? 0));
 
-  return deepRemoveBy(
-    [...songs.values()].slice(0, amount),
-    (key, value) => key.startsWith("_") || value == null
-  );
+  return [...songs.values()].slice(0, amount);
 }
