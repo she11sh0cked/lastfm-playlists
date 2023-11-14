@@ -1,3 +1,5 @@
+import { Cron } from "croner";
+
 import { LastFMSong, PlaylistType, getPlaylist } from "./api/lastfm";
 import { getAuth, spotify } from "./lib/spotify";
 import { logger } from "./utils/logger";
@@ -79,6 +81,8 @@ async function createPlaylist({
 const USERNAMES = process.env.LASTFM_USERNAMES?.split(",") ?? [];
 const TYPES = process.env.LASTFM_PLAYLISTS?.split(",") ?? [];
 const AMOUNT = Number(process.env.AMOUNT ?? 30);
+const CRON = process.env.CRON;
+const IMMEDIATE = (process.env.IMMEDIATE ?? "false") === "true";
 
 if (USERNAMES.length === 0) {
   logger.error("No Last.fm usernames specified.");
@@ -95,21 +99,31 @@ if (isNaN(AMOUNT)) {
   process.exit(1);
 }
 
-await getAuth("token.json");
+async function createPlaylists() {
+  await getAuth("token.json");
 
-for (const username of USERNAMES) {
-  for (const type of TYPES) {
-    logger.info(
-      "Creating %s playlist for %s with %d songs...",
-      type,
-      username,
-      AMOUNT
-    );
+  for (const username of USERNAMES) {
+    for (const type of TYPES) {
+      logger.info(
+        "Creating %s playlist for %s with %d songs...",
+        type,
+        username,
+        AMOUNT
+      );
 
-    await createPlaylist({
-      username,
-      type: type as PlaylistType,
-      amount: AMOUNT,
-    });
+      await createPlaylist({
+        username,
+        type: type as PlaylistType,
+        amount: AMOUNT,
+      });
+    }
   }
+}
+
+if (IMMEDIATE || CRON == null) {
+  logger.info("Running immediately...");
+  createPlaylists();
+} else {
+  logger.info("Running on cron schedule: %s", CRON);
+  Cron(CRON, createPlaylists);
 }
