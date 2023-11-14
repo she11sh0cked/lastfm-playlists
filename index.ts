@@ -123,7 +123,9 @@ async function createPlaylists() {
 if (IMMEDIATE || CRON == null) {
   logger.info("Running immediately...");
   createPlaylists();
-} else {
+}
+
+if (CRON != null) {
   logger.info("Running on cron schedule: %s", CRON);
   Cron(CRON, createPlaylists);
 }
