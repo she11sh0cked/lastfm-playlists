@@ -83,6 +83,7 @@ const TYPES = process.env.LASTFM_PLAYLISTS?.split(",") ?? [];
 const AMOUNT = Number(process.env.AMOUNT ?? 30);
 const CRON = process.env.CRON;
 const IMMEDIATE = (process.env.IMMEDIATE ?? "false") === "true";
+const TOKEN_FILE = process.env.TOKEN_FILE ?? "token.json";
 
 if (USERNAMES.length === 0) {
   logger.error("No Last.fm usernames specified.");
@@ -100,7 +101,7 @@ if (isNaN(AMOUNT)) {
 }
 
 async function createPlaylists() {
-  await getAuth("token.json");
+  await getAuth(TOKEN_FILE);
 
   for (const username of USERNAMES) {
     for (const type of TYPES) {
