@@ -2,7 +2,7 @@
   "name": "lastfm-playlists",
   "module": "index.ts",
   "devDependencies": {
-    "@types/spotify-web-api-node": "^5.0.7",
+    "@types/spotify-web-api-node": "^5.0.11",
     "bun-types": "latest"
   },
   "peerDependencies": {
@@ -14,8 +14,8 @@
   },
   "type": "module",
   "dependencies": {
-    "pino": "^8.15.1",
-    "pino-pretty": "^10.2.0",
+    "pino": "^8.20.0",
+    "pino-pretty": "^11.0.0",
     "spotify-web-api-node": "^5.0.2"
   }
 }
