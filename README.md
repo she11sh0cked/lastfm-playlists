@@ -74,3 +74,7 @@ docker run -d \
 2. Install the dependencies with `bun install`.
 3. Copy the `.env.example` file to `.env` and fill in the required information.
 4. Run the application with `bun start`.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
