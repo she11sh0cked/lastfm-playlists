@@ -1,11 +1,16 @@
-FROM oven/bun
-
-ENV TOKEN_FILE=/config/token.json
-
+FROM oven/bun:alpine as base
 WORKDIR /app
 
-COPY . /app
+FROM base as install
+RUN mkdir -p /tmp/prod
+COPY package.json bun.lockb /tmp/prod/
+RUN cd /tmp/prod && bun install --from-lockfile --production
 
-RUN bun install
+FROM base as release
+ENV TOKEN_FILE=/config/token.json
 
-CMD ["bun", "start"]
+COPY --from=install /tmp/prod/node_modules /app/node_modules
+COPY . .
+
+EXPOSE 3000/tcp
+CMD ["bun", "run", "start"]
