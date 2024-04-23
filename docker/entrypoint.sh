@@ -5,8 +5,8 @@ if [ -z "$LASTFM_USERNAMES" ]; then
     exit 1
 fi
 
-if [ -z "$LASTFM_TYPES" ]; then
-    echo "LASTFM_TYPES is not set. Exiting."
+if [ -z "$LASTFM_PLAYLISTS" ]; then
+    echo "LASTFM_PLAYLISTS is not set. Exiting."
     exit 1
 fi
 
