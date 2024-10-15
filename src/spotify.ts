@@ -1,5 +1,6 @@
 import SpotifyWebApi from "spotify-web-api-node";
-import { logger } from "../utils/logger";
+
+import { logger } from "./logger";
 
 export const spotify = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,

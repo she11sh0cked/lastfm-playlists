@@ -1,6 +1,6 @@
-import { LastFMSong, PlaylistType, getPlaylist } from "./api/lastfm";
-import { getAuth, spotify } from "./lib/spotify";
-import { logger } from "./utils/logger";
+import { LastFMSong, PlaylistType, getPlaylist } from "./lastfm";
+import { getAuth, spotify } from "./spotify";
+import { logger } from "./logger";
 
 async function createPlaylist({
   username,
