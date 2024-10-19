@@ -1,101 +1,139 @@
-import SpotifyWebApi from "spotify-web-api-node";
+import { SpotifyApi, type AccessToken } from "@spotify/web-api-ts-sdk";
+import chalk from "chalk-template";
 
-import { logger } from "./logger";
+async function refreshToken(
+  clientId: string,
+  clientSecret: string,
+  token: AccessToken
+): Promise<AccessToken> {
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: token.refresh_token,
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  });
 
-export const spotify = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_CLIENT_ID,
-  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: process.env.SPOTIFY_REDIRECT_URI,
-});
+  if (!response.ok) {
+    throw new Error("Failed to refresh token.");
+  }
 
-async function getAuthViaUrl() {
-  const authUrl = spotify.createAuthorizeURL(
-    [
-      "playlist-read-private",
-      "playlist-modify-private",
-      "playlist-modify-public",
-    ],
-    "state"
-  );
+  const newToken = (await response.json()) as AccessToken;
 
-  logger.info("Please authorize the app by visiting this URL:");
-  logger.info(authUrl);
+  newToken.expires = Date.now() + newToken.expires_in * 1000;
+  newToken.refresh_token = token.refresh_token;
 
-  return await new Promise((resolve, reject) => {
+  return newToken;
+}
+
+async function withToken(
+  clientId: string,
+  clientSecret: string,
+  file: string
+): Promise<SpotifyApi> {
+  let token = await Bun.file(file).json();
+
+  if (Date.now() >= (token.expires ?? 0)) {
+    token = await refreshToken(clientId, clientSecret, token);
+    await Bun.write(file, JSON.stringify(token));
+  }
+
+  return SpotifyApi.withAccessToken(clientId, token);
+}
+
+async function withAuth(
+  clientId: string,
+  clientSecret: string,
+  redirectUri: string,
+  scopes: string[],
+  file: string
+): Promise<SpotifyApi> {
+  const url = new URL("https://accounts.spotify.com/authorize");
+
+  const state = Number(Math.random()).toString(36).substring(7);
+
+  url.searchParams.append("client_id", clientId);
+  url.searchParams.append("response_type", "code");
+  url.searchParams.append("redirect_uri", redirectUri);
+  url.searchParams.append("scope", scopes.join(" "));
+  url.searchParams.append("state", state);
+
+  console.log(chalk`{bold Visit this URL to authenticate with Spotify:}`);
+  console.log(url.href);
+
+  return await new Promise((resolve) =>
     Bun.serve({
       port: 3000,
-      async fetch(request, server) {
+      fetch: async (request, server) => {
         const url = new URL(request.url);
 
-        if (url.pathname !== "/callback") {
-          return new Response("Not found", {
-            status: 404,
-          });
+        if (url.pathname === "/callback") {
+          const code = url.searchParams.get("code");
+          const state = url.searchParams.get("state");
+
+          if (!code) {
+            return new Response("No code provided.");
+          }
+
+          if (state !== state) {
+            return new Response("Invalid state.");
+          }
+
+          const response = await fetch(
+            "https://accounts.spotify.com/api/token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                grant_type: "authorization_code",
+                code,
+                redirect_uri: redirectUri,
+                client_id: clientId,
+                client_secret: clientSecret,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            return new Response("Failed to authenticate with Spotify.");
+          }
+
+          const token = (await response.json()) as AccessToken;
+
+          token.expires = Date.now() + token.expires_in * 1000;
+
+          await Bun.write(file, JSON.stringify(token));
+
+          server
+            .stop()
+            .then(() => resolve(SpotifyApi.withAccessToken(clientId, token)));
+
+          return new Response("You can close this tab now.");
         }
 
-        const error = url.searchParams.get("error");
-
-        if (error != null) {
-          reject(error);
-          return new Response("Error authorizing app: " + error, {
-            status: 500,
-          });
-        }
-
-        const code = url.searchParams.get("code");
-
-        if (code == null) {
-          reject("No authorization code provided.");
-          return new Response("No authorization code provided.", {
-            status: 500,
-          });
-        }
-
-        const data = await spotify.authorizationCodeGrant(code);
-
-        spotify.setAccessToken(data.body.access_token);
-        spotify.setRefreshToken(data.body.refresh_token);
-
-        server.stop();
-        resolve(data.body);
-
-        return new Response("Authorized! You can close this tab now.", {
-          status: 200,
-        });
+        return new Response("Not found.", { status: 404 });
       },
-    });
-  });
+    })
+  );
 }
 
-async function getAuthViaFile(path: string) {
-  const token = Bun.file(path);
-
-  const data = await token.json();
-
-  spotify.setAccessToken(data.access_token);
-  spotify.setRefreshToken(data.refresh_token);
-
-  await spotify.refreshAccessToken().then((data) => {
-    spotify.setAccessToken(data.body.access_token);
-  });
-
-  return data;
-}
-
-export async function getAuth(path?: string) {
-  if (!path) {
-    return await getAuthViaUrl();
-  }
-
-  let data;
-
+export async function createSpotify(
+  clientId: string,
+  clientSecret: string,
+  redirectUri: string,
+  scopes: string[],
+  file: string
+): Promise<SpotifyApi> {
   try {
-    data = await getAuthViaFile(path);
-  } catch (err) {
-    data = await getAuthViaUrl();
+    return await withToken(clientId, clientSecret, file);
+  } catch {
+    return await withAuth(clientId, clientSecret, redirectUri, scopes, file);
   }
-
-  Bun.write(path, JSON.stringify(data, null, 2));
-
-  return data;
 }

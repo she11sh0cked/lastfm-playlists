@@ -1,116 +1,19 @@
-import { LastFMSong, PlaylistType, getPlaylist } from "./lastfm";
-import { getAuth, spotify } from "./spotify";
-import { logger } from "./logger";
+import { config } from "./config";
+import { PlaylistGenerator } from "./generator";
+import { createSpotify } from "./spotify";
 
-async function createPlaylist({
-  username,
-  type,
-  amount,
-  playlistOpts = {},
-}: {
-  username: string;
-  type: PlaylistType;
-  amount: number;
-  playlistOpts?: {
-    name?: string;
-    description?: string;
-    public?: boolean;
-  };
-}): Promise<void> {
-  playlistOpts.name ??= `${username}'s ${type}`;
-  playlistOpts.description ??= `A playlist of ${type} songs from ${username}'s Last.fm library.`;
-  playlistOpts.public ??= false;
+const spotify = await createSpotify(
+  config.get("spotify.clientId"),
+  config.get("spotify.clientSecret"),
+  config.get("spotify.redirectUri"),
+  config.get("spotify.scopes"),
+  config.get("spotify.tokenFile")
+);
 
-  const songs = new Map<
-    string,
-    LastFMSong & { spotify: SpotifyApi.TrackObjectFull }
-  >();
+const generator = new PlaylistGenerator(spotify);
 
-  do {
-    const playlist = await getPlaylist(username, type);
-
-    for (const song of playlist) {
-      if (songs.size >= amount) break;
-      if (songs.has(song.url)) continue;
-
-      const spotifyTrack = await spotify
-        .searchTracks(`track:${song.name} artist:${song.artists[0].name}`, {
-          limit: 1,
-        })
-        .then((res) => res.body.tracks?.items[0]);
-
-      if (spotifyTrack == null) continue;
-
-      songs.set(song.url, { ...song, spotify: spotifyTrack });
-
-      logger.info(
-        "[%s/%s] %s - %s",
-        songs.size.toString().padStart(amount.toString().length, " "),
-        amount,
-        song.artists[0].name,
-        song.name
-      );
-    }
-  } while (songs.size < amount);
-
-  let playlistId: string | undefined;
-
-  const playlists = await spotify.getUserPlaylists();
-
-  for (const playlist of playlists.body.items) {
-    if (playlist.name === playlistOpts.name) {
-      playlistId = playlist.id;
-      break;
-    }
-  }
-
-  if (playlistId == null) {
-    const playlist = await spotify.createPlaylist(playlistOpts.name, {
-      description: playlistOpts.description,
-    });
-    playlistId = playlist.body.id;
-  }
-
-  const tracks = [...songs.values()].map((song) => song.spotify.uri);
-
-  await spotify.replaceTracksInPlaylist(playlistId, tracks);
-}
-
-const USERNAMES = process.env.LASTFM_USERNAMES?.split(",") ?? [];
-const TYPES = process.env.LASTFM_PLAYLISTS?.split(",") ?? [];
-const AMOUNT = Number(process.env.AMOUNT ?? 30);
-const TOKEN_FILE = process.env.TOKEN_FILE ?? "token.json";
-
-if (USERNAMES.length === 0) {
-  logger.error("No Last.fm usernames specified.");
-  process.exit(1);
-}
-
-if (TYPES.length === 0) {
-  logger.error("No Last.fm playlist types specified.");
-  process.exit(1);
-}
-
-if (isNaN(AMOUNT)) {
-  logger.error("Amount is not a number.");
-  process.exit(1);
-}
-
-await getAuth(TOKEN_FILE);
-
-for (const username of USERNAMES) {
-  for (const type of TYPES) {
-    logger.info(
-      "Creating %s playlist for %s with %d songs...",
-      type,
-      username,
-      AMOUNT
-    );
-
-    await createPlaylist({
-      username,
-      type: type as PlaylistType,
-      amount: AMOUNT,
-    });
+for await (const username of config.get("usernames")) {
+  for await (const playlist of config.get("playlists")) {
+    await generator.create(username, playlist, config.get("amount"));
   }
 }
