@@ -1,5 +1,6 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import chalk from "chalk-template";
+
 import type { Config } from "./config";
 
 type Track = {
@@ -75,9 +76,13 @@ export class PlaylistGenerator {
   ): Promise<void> {
     const user = await this.spotify.currentUser.profile();
     const playlists = await this.spotify.playlists.getUsersPlaylists(user.id);
+    const now = new Date().toLocaleString("en-US", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
 
     const playlistName = `${username}'s ${type}`;
-    const description = `Generated from Last.fm ${type} for ${username}`;
+    const description = `A playlist generated from ${username}'s ${type} station on Last.fm on ${now}`;
 
     console.log(chalk`{bold ${playlistName}}`);
 
