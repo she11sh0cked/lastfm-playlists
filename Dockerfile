@@ -7,7 +7,7 @@ COPY package.json bun.lockb /tmp/prod/
 RUN cd /tmp/prod && bun install --from-lockfile --production
 
 FROM base AS release
-ENV TOKEN_FILE=/config/token.json
+ENV SPOTIFY_TOKEN_FILE=/config/token.json
 
 RUN apk --update add bash && rm -rf /var/cache/apk/*
 
