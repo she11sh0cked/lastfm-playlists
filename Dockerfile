@@ -9,7 +9,7 @@ RUN cd /tmp/prod && bun install --from-lockfile --production
 FROM base AS release
 ENV TOKEN_FILE=/config/token.json
 
-RUN apk --update add bash docker && rm -rf /var/cache/apk/*
+RUN apk --update add bash && rm -rf /var/cache/apk/*
 
 COPY --from=install /tmp/prod/node_modules /app/node_modules
 COPY . .
