@@ -105,3 +105,4 @@ const config = convict({
 config.validate({ allowed: "strict" });
 
 export { config };
+export type Config = ReturnType<typeof config.getProperties>;

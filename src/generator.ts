@@ -1,7 +1,6 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import chalk from "chalk-template";
-
-type PlaylistType = "library" | "mix" | "recommended";
+import type { Config } from "./config";
 
 type Track = {
   artists: { name: string }[];
@@ -12,9 +11,9 @@ export class PlaylistGenerator {
   constructor(private spotify: SpotifyApi) {}
 
   private async fetchTracks(
-    username: string,
-    type: PlaylistType,
-    amount?: number
+    username: Config["usernames"][number],
+    type: Config["playlists"][number],
+    amount?: Config["amount"]
   ): Promise<string[]> {
     const found = new Set<string>();
     const notFound = new Set<string>();
@@ -70,9 +69,9 @@ export class PlaylistGenerator {
   }
 
   async create(
-    username: string,
-    type: PlaylistType,
-    amount?: number
+    username: Config["usernames"][number],
+    type: Config["playlists"][number],
+    amount?: Config["amount"]
   ): Promise<void> {
     const user = await this.spotify.currentUser.profile();
     const playlists = await this.spotify.playlists.getUsersPlaylists(user.id);
