@@ -57,7 +57,7 @@ docker run -d \
 | `-e SPOTIFY_CLIENT_ID=CLIENT_ID`              | Your Spotify client ID.                                                          |
 | `-e SPOTIFY_CLIENT_SECRET=CLIENT_SECRET`      | Your Spotify client secret.                                                      |
 | `-e SPOTIFY_REDIRECT_URI=REDIRECT_URI`        | Your Spotify redirect URI.                                                       |
-| `-e SPOTIFY_TOKEN=token.json`                 | The token file to store the Spotify token. Default: `/config/token.json`.        |
+| `-e SPOTIFY_TOKEN_FILE=/config/token.json`    | The token file to store the Spotify token.                                       |
 | `-v /config`                                  | Persistent storage for the token file.                                           |
 
 ## Running locally
@@ -66,6 +66,8 @@ docker run -d \
 2. Install the dependencies with `bun install`.
 3. Create a `.env` file with the required environment variables.
 4. Run the application with `bun start`.
+
+> Note: The Spotify token will be stored in the root of the project as `token.json` by default.
 
 ## License
 
