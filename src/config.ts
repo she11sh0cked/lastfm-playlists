@@ -1,5 +1,50 @@
 import convict from "convict";
 
+const playlists = ["library", "mix", "recommended"] as const;
+
+const coerceArray = (value: string) =>
+  value.split(",").map((item) => item.trim());
+
+convict.addFormat({
+  name: "usernames",
+  validate: (value: string[]) => {
+    if (!Array.isArray(value)) {
+      throw new Error("must be an array");
+    }
+
+    if (value.length === 0) {
+      throw new Error("must not be empty");
+    }
+
+    for (const item of value) {
+      if (typeof item !== "string") {
+        throw new Error("must be a string");
+      }
+    }
+  },
+  coerce: coerceArray,
+});
+
+convict.addFormat({
+  name: "playlists",
+  validate: (value: string[]) => {
+    if (!Array.isArray(value)) {
+      throw new Error("must be an array");
+    }
+
+    if (value.length === 0) {
+      throw new Error("must not be empty");
+    }
+
+    for (const item of value) {
+      if (!playlists.includes(item as any)) {
+        throw new Error(`must be one of: ${playlists.join(", ")}`);
+      }
+    }
+  },
+  coerce: coerceArray,
+});
+
 const config = convict({
   spotify: {
     clientId: {
@@ -39,14 +84,14 @@ const config = convict({
   },
   usernames: {
     doc: "The Last.fm usernames to retrieve playlists for.",
-    format: Array,
-    default: [],
+    format: "usernames",
+    default: [] as string[],
     env: "LASTFM_USERNAMES",
   },
   playlists: {
     doc: "The Last.fm playlist types to retrieve.",
-    format: Array,
-    default: ["library", "mix", "recommended"] as const,
+    format: "playlists",
+    default: playlists,
     env: "LASTFM_PLAYLISTS",
   },
   amount: {
