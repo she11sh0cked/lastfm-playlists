@@ -5,15 +5,15 @@ const config = convict({
     clientId: {
       doc: "The Spotify client ID.",
       format: String,
-      default: "",
+      default: null,
       env: "SPOTIFY_CLIENT_ID",
-    },
+    } as convict.SchemaObj<string>,
     clientSecret: {
       doc: "The Spotify client secret.",
       format: String,
-      default: "",
+      default: null,
       env: "SPOTIFY_CLIENT_SECRET",
-    },
+    } as convict.SchemaObj<string>,
     redirectUri: {
       doc: "The Spotify redirect URI.",
       format: String,
