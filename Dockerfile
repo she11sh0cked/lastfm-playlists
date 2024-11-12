@@ -1,12 +1,12 @@
-FROM oven/bun:alpine as base
+FROM oven/bun:alpine AS base
 WORKDIR /app
 
-FROM base as install
+FROM base AS install
 RUN mkdir -p /tmp/prod
 COPY package.json bun.lockb /tmp/prod/
 RUN cd /tmp/prod && bun install --from-lockfile --production
 
-FROM base as release
+FROM base AS release
 ENV TOKEN_FILE=/config/token.json
 
 RUN apk --update add bash docker && rm -rf /var/cache/apk/*
