@@ -88,7 +88,9 @@ export class PlaylistGenerator {
 
     const tracks = await this.fetchTracks(username, type, amount);
 
-    let playlist = playlists.items.find((p) => p.name === playlistName);
+    let playlist = playlists.items.find(
+      (playlist) => playlist?.name === playlistName
+    );
 
     if (playlist) {
       await this.spotify.playlists.changePlaylistDetails(playlist.id, {
