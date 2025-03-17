@@ -19,6 +19,8 @@ services:
       - LASTFM_USERNAMES=she11sh0cked
       - LASTFM_PLAYLISTS=library,mix,recommended
       - AMOUNT=100
+      - ENABLE_BLENDED=true
+      - ENEABLE_SEPARATE=true
       - SPOTIFY_CLIENT_ID=your-client-id
       - SPOTIFY_CLIENT_SECRET=your-client-secret
       - SPOTIFY_REDIRECT_URI=your-redirect-uri
@@ -36,6 +38,8 @@ docker run -d \
   -e LASTFM_USERNAMES=she11sh0cked \
   -e LASTFM_PLAYLISTS=library,mix,recommended \
   -e AMOUNT=100 \
+  -e ENABLE_BLENDED=true \
+  -e ENABLE_SEPARATE=true \
   -e SPOTIFY_CLIENT_ID=your-client-id \
   -e SPOTIFY_CLIENT_SECRET=your-client-secret \
   -e SPOTIFY_REDIRECT_URI=your-redirect-uri \
@@ -54,6 +58,8 @@ docker run -d \
 | `-e LASTFM_USERNAMES=USERNAME`                | Your Last.fm username or a comma separated list of usernames.                    |
 | `-e LASTFM_PLAYLISTS=mix,library,recommended` | The playlists to create. Available: mix, library, recommended.                   |
 | `-e AMOUNT=100`                               | The amount of songs to add to the playlists.                                     |
+| `-e ENABLE_BLENDED=true`                      | Whether to create blended playlists from all users' tracks.                      |
+| `-e ENABLE_SEPARATE=true`                     | Whether to create seperate playlists for each user.                              |
 | `-e SPOTIFY_CLIENT_ID=CLIENT_ID`              | Your Spotify client ID.                                                          |
 | `-e SPOTIFY_CLIENT_SECRET=CLIENT_SECRET`      | Your Spotify client secret.                                                      |
 | `-e SPOTIFY_REDIRECT_URI=REDIRECT_URI`        | Your Spotify redirect URI.                                                       |

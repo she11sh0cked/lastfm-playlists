@@ -100,6 +100,18 @@ const config = convict({
     default: 30,
     env: "AMOUNT",
   },
+  enableBlend: {
+    doc: "Whether to create blended playlists from all users' tracks.",
+    format: Boolean,
+    default: true,
+    env: "ENABLE_BLEND",
+  },
+  enableSeperate: {
+    doc: "Whether to create seperate playlists for each user.",
+    format: Boolean,
+    default: true,
+    env: "ENABLE_SEPERATE",
+  },
 });
 
 config.validate({ allowed: "strict" });

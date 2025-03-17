@@ -1,11 +1,15 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import chalk from "chalk-template";
-
 import type { Config } from "./config";
 
 type Track = {
   artists: { name: string }[];
   name: string;
+};
+
+type PlaylistDetails = {
+  name: string;
+  description: string;
 };
 
 export class PlaylistGenerator {
@@ -69,32 +73,27 @@ export class PlaylistGenerator {
     return Array.from(found).slice(0, amount);
   }
 
-  async create(
-    username: Config["usernames"][number],
-    type: Config["playlists"][number],
-    amount?: Config["amount"]
-  ): Promise<void> {
-    const user = await this.spotify.currentUser.profile();
-    const playlists = await this.spotify.playlists.getUsersPlaylists(user.id);
-    const now = new Date().toLocaleString("en-US", {
+  private getFormattedTimestamp(): string {
+    return new Date().toLocaleString("en-US", {
       dateStyle: "short",
       timeStyle: "short",
     });
+  }
 
-    const playlistName = `${username}'s ${type}`;
-    const description = `A playlist generated from ${username}'s ${type} station on Last.fm on ${now}`;
-
-    console.log(chalk`{bold ${playlistName}}`);
-
-    const tracks = await this.fetchTracks(username, type, amount);
+  private async createOrUpdatePlaylist(
+    details: PlaylistDetails,
+    tracks: string[]
+  ): Promise<void> {
+    const user = await this.spotify.currentUser.profile();
+    const playlists = await this.spotify.playlists.getUsersPlaylists(user.id);
 
     let playlist = playlists.items.find(
-      (playlist) => playlist?.name === playlistName
+      (playlist) => playlist?.name === details.name
     );
 
     if (playlist) {
       await this.spotify.playlists.changePlaylistDetails(playlist.id, {
-        description,
+        description: details.description,
       });
 
       if (playlist.tracks.total > 0) {
@@ -108,11 +107,93 @@ export class PlaylistGenerator {
       }
     } else {
       playlist = await this.spotify.playlists.createPlaylist(user.id, {
-        name: playlistName,
-        description,
+        name: details.name,
+        description: details.description,
       });
     }
 
-    await this.spotify.playlists.addItemsToPlaylist(playlist.id, tracks);
+    if (tracks.length > 0) {
+      await this.spotify.playlists.addItemsToPlaylist(playlist.id, tracks);
+      console.log(
+        chalk`{green Successfully updated playlist with ${tracks.length} tracks}`
+      );
+    } else {
+      console.log(chalk`{yellow No tracks found for the playlist}`);
+    }
+  }
+
+  async createSeperatePlaylists(
+    username: Config["usernames"][number],
+    type: Config["playlists"][number],
+    amount?: Config["amount"]
+  ): Promise<void> {
+    const now = this.getFormattedTimestamp();
+    const playlistName = `${username}'s ${type}`;
+    const description = `A playlist generated from ${username}'s ${type} station on Last.fm on ${now}`;
+
+    console.log(chalk`{bold ${playlistName}}`);
+
+    const tracks = await this.fetchTracks(username, type, amount);
+
+    await this.createOrUpdatePlaylist(
+      { name: playlistName, description },
+      tracks
+    );
+  }
+
+  async createBlendedPlaylist(
+    usernames: Config["usernames"],
+    type: Config["playlists"][number],
+    amount?: Config["amount"]
+  ): Promise<void> {
+    if (usernames.length === 0) {
+      console.log(
+        chalk`{yellow No usernames provided, skipping blend playlist creation}`
+      );
+      return;
+    }
+
+    const now = this.getFormattedTimestamp();
+    const usernamesList = usernames.join(" + ");
+    const playlistName = `Blended ${type} - ${usernamesList}`;
+    const description = `A blended playlist of ${type} tracks from ${usernamesList} on Last.fm, created on ${now}`;
+
+    console.log(chalk`{bold Creating blended playlist: ${playlistName}}`);
+
+    // Fetch tracks for each user
+    const userTracks: Map<string, string[]> = new Map();
+    for (const username of usernames) {
+      console.log(chalk`{bold Fetching tracks for ${username}...}`);
+      const tracks = await this.fetchTracks(
+        username,
+        type,
+        amount ? Math.ceil(amount / usernames.length) : undefined
+      );
+      userTracks.set(username, tracks);
+    }
+
+    // Interlace tracks from all users
+    const blendedTracks: string[] = [];
+    let allTracksExhausted = false;
+    let index = 0;
+
+    while (!allTracksExhausted && blendedTracks.length < (amount ?? Infinity)) {
+      allTracksExhausted = true;
+
+      for (const username of usernames) {
+        const tracks = userTracks.get(username) ?? [];
+        if (index < tracks.length) {
+          blendedTracks.push(tracks[index]);
+          allTracksExhausted = false;
+        }
+      }
+
+      index++;
+    }
+
+    await this.createOrUpdatePlaylist(
+      { name: playlistName, description },
+      blendedTracks
+    );
   }
 }

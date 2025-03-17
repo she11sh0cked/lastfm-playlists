@@ -12,8 +12,26 @@ const spotify = await createSpotify(
 
 const generator = new PlaylistGenerator(spotify);
 
-for await (const username of config.get("usernames")) {
+if (config.get("enableSeperate")) {
+  // Create individual playlists for each user
+  for await (const username of config.get("usernames")) {
+    for await (const playlist of config.get("playlists")) {
+      await generator.createSeperatePlaylists(
+        username,
+        playlist,
+        config.get("amount")
+      );
+    }
+  }
+}
+
+if (config.get("enableBlend")) {
+  // Create blended playlists that interlace songs from all users if enabled
   for await (const playlist of config.get("playlists")) {
-    await generator.create(username, playlist, config.get("amount"));
+    await generator.createBlendedPlaylist(
+      config.get("usernames"),
+      playlist,
+      config.get("amount")
+    );
   }
 }
