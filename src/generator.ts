@@ -14,16 +14,23 @@ type PlaylistDetails = {
   description: string;
 };
 
+// Cache type to store Spotify search results
+type SongCache = Map<string, string | null>;
+
 export class PlaylistGenerator {
   constructor(private spotify: SpotifyApi) {}
 
   private async fetchTracks(
     username: Config["usernames"][number],
     type: Config["playlists"][number],
-    amount?: Config["amount"]
+    amount?: Config["amount"],
+    cache?: SongCache
   ): Promise<string[]> {
     const found = new Set<string>();
     const notFound = new Set<string>();
+
+    // Initialize cache if not provided
+    const songCache = cache || new Map<string, string | null>();
 
     for (let page = 1; found.size < (amount ?? 0); page++) {
       const data = await fetch(
@@ -47,19 +54,34 @@ export class PlaylistGenerator {
           continue; // Skip tracks that were not found on Spotify
         }
 
-        const result = await withRetry(() =>
-          this.spotify.search(
-            `track:${track.name} ${track.artists
-              .map((a) => `artist:${a.name}`)
-              .join(" ")}`,
-            ["track"]
-          )
-        );
+        let uri: string | null = null;
+        let fromCache = false;
 
-        const wasFound = result.tracks.items.length > 0;
+        // Check if the track is in the cache
+        if (songCache.has(key)) {
+          uri = songCache.get(key) || null;
+          fromCache = true;
+        } else {
+          const result = await withRetry(() =>
+            this.spotify.search(
+              `track:${track.name} ${track.artists
+                .map((a) => `artist:${a.name}`)
+                .join(" ")}`,
+              ["track"]
+            )
+          );
+
+          const wasFound = result.tracks.items.length > 0;
+          uri = wasFound ? result.tracks.items[0].uri : null;
+
+          // Store result in cache
+          songCache.set(key, uri);
+        }
+
+        const wasFound = uri !== null;
 
         if (wasFound) {
-          found.add(result.tracks.items[0].uri);
+          found.add(uri!);
         } else {
           notFound.add(key);
         }
@@ -68,8 +90,11 @@ export class PlaylistGenerator {
           amount?.toString().length ?? 0
         );
 
+        // Use a different color for cached songs
         console.log(
-          chalk`{bold ${number}} {${wasFound ? "green" : "red"} ${key}}`
+          chalk`{bold ${number}} {${
+            fromCache ? "cyan" : wasFound ? "green" : "red"
+          } ${key}}${fromCache ? chalk` {gray (cached)}` : ""}`
         );
       }
     }
@@ -139,7 +164,8 @@ export class PlaylistGenerator {
   async createSeperatePlaylists(
     username: Config["usernames"][number],
     type: Config["playlists"][number],
-    amount?: Config["amount"]
+    amount?: Config["amount"],
+    cache?: SongCache
   ): Promise<void> {
     const now = this.getFormattedTimestamp();
     const playlistName = `${username}'s ${type}`;
@@ -147,7 +173,7 @@ export class PlaylistGenerator {
 
     console.log(chalk`{bold ${playlistName}}`);
 
-    const tracks = await this.fetchTracks(username, type, amount);
+    const tracks = await this.fetchTracks(username, type, amount, cache);
 
     await this.createOrUpdatePlaylist(
       { name: playlistName, description },
@@ -158,7 +184,8 @@ export class PlaylistGenerator {
   async createBlendedPlaylist(
     usernames: Config["usernames"],
     type: Config["playlists"][number],
-    amount?: Config["amount"]
+    amount?: Config["amount"],
+    cache?: SongCache
   ): Promise<void> {
     if (usernames.length === 0) {
       console.log(
@@ -181,7 +208,8 @@ export class PlaylistGenerator {
       const tracks = await this.fetchTracks(
         username,
         type,
-        amount ? Math.ceil(amount / usernames.length) : undefined
+        amount ? Math.ceil(amount / usernames.length) : undefined,
+        cache
       );
       userTracks.set(username, tracks);
     }

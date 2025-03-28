@@ -12,6 +12,9 @@ const spotify = await createSpotify(
 
 const generator = new PlaylistGenerator(spotify);
 
+// Create a cache to store Spotify song lookups across playlist generations
+const songCache = new Map<string, string | null>();
+
 if (config.get("enableSeperate")) {
   // Create individual playlists for each user
   for await (const username of config.get("usernames")) {
@@ -19,7 +22,8 @@ if (config.get("enableSeperate")) {
       await generator.createSeperatePlaylists(
         username,
         playlist,
-        config.get("amount")
+        config.get("amount"),
+        songCache
       );
     }
   }
@@ -31,7 +35,8 @@ if (config.get("enableBlend")) {
     await generator.createBlendedPlaylist(
       config.get("usernames"),
       playlist,
-      config.get("amount")
+      config.get("amount"),
+      songCache
     );
   }
 }
