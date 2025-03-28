@@ -1,23 +1,27 @@
 import { SpotifyApi, type AccessToken } from "@spotify/web-api-ts-sdk";
 import chalk from "chalk-template";
 
+import { withRetry } from "./retry";
+
 async function refreshToken(
   clientId: string,
   clientSecret: string,
   token: AccessToken
 ): Promise<AccessToken> {
-  const response = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: token.refresh_token,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  });
+  const response = await withRetry(() =>
+    fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: token.refresh_token,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    })
+  );
 
   if (!response.ok) {
     throw new Error("Failed to refresh token.");
@@ -84,9 +88,8 @@ async function withAuth(
             return new Response("Invalid state.");
           }
 
-          const response = await fetch(
-            "https://accounts.spotify.com/api/token",
-            {
+          const response = await withRetry(() =>
+            fetch("https://accounts.spotify.com/api/token", {
               method: "POST",
               headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
@@ -98,7 +101,7 @@ async function withAuth(
                 client_id: clientId,
                 client_secret: clientSecret,
               }),
-            }
+            })
           );
 
           if (!response.ok) {

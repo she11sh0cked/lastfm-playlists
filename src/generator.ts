@@ -1,6 +1,8 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import chalk from "chalk-template";
+
 import type { Config } from "./config";
+import { withRetry } from "./retry";
 
 type Track = {
   artists: { name: string }[];
@@ -45,11 +47,13 @@ export class PlaylistGenerator {
           continue; // Skip tracks that were not found on Spotify
         }
 
-        const result = await this.spotify.search(
-          `track:${track.name} ${track.artists
-            .map((a) => `artist:${a.name}`)
-            .join(" ")}`,
-          ["track"]
+        const result = await withRetry(() =>
+          this.spotify.search(
+            `track:${track.name} ${track.artists
+              .map((a) => `artist:${a.name}`)
+              .join(" ")}`,
+            ["track"]
+          )
         );
 
         const wasFound = result.tracks.items.length > 0;
@@ -84,36 +88,46 @@ export class PlaylistGenerator {
     details: PlaylistDetails,
     tracks: string[]
   ): Promise<void> {
-    const user = await this.spotify.currentUser.profile();
-    const playlists = await this.spotify.playlists.getUsersPlaylists(user.id);
+    const user = await withRetry(() => this.spotify.currentUser.profile());
+    const playlists = await withRetry(() =>
+      this.spotify.playlists.getUsersPlaylists(user.id)
+    );
 
     let playlist = playlists.items.find(
       (playlist) => playlist?.name === details.name
     );
 
     if (playlist) {
-      await this.spotify.playlists.changePlaylistDetails(playlist.id, {
-        description: details.description,
-      });
+      await withRetry(() =>
+        this.spotify.playlists.changePlaylistDetails(playlist!.id, {
+          description: details.description,
+        })
+      );
 
       if (playlist.tracks.total > 0) {
-        const { items } = await this.spotify.playlists.getPlaylistItems(
-          playlist.id
+        const { items } = await withRetry(() =>
+          this.spotify.playlists.getPlaylistItems(playlist!.id)
         );
 
-        await this.spotify.playlists.removeItemsFromPlaylist(playlist.id, {
-          tracks: items.map((t) => ({ uri: t.track.uri })),
-        });
+        await withRetry(() =>
+          this.spotify.playlists.removeItemsFromPlaylist(playlist!.id, {
+            tracks: items.map((t) => ({ uri: t.track.uri })),
+          })
+        );
       }
     } else {
-      playlist = await this.spotify.playlists.createPlaylist(user.id, {
-        name: details.name,
-        description: details.description,
-      });
+      playlist = await withRetry(() =>
+        this.spotify.playlists.createPlaylist(user.id, {
+          name: details.name,
+          description: details.description,
+        })
+      );
     }
 
     if (tracks.length > 0) {
-      await this.spotify.playlists.addItemsToPlaylist(playlist.id, tracks);
+      await withRetry(() =>
+        this.spotify.playlists.addItemsToPlaylist(playlist.id, tracks)
+      );
       console.log(
         chalk`{green Successfully updated playlist with ${tracks.length} tracks}`
       );
