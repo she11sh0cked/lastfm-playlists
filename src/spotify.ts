@@ -74,13 +74,13 @@ async function withAuth(
 
         if (url.pathname === "/callback") {
           const code = url.searchParams.get("code");
-          const state = url.searchParams.get("state");
+          const receivedState = url.searchParams.get("state");
 
           if (!code) {
             return new Response("No code provided.");
           }
 
-          if (state !== state) {
+          if (state !== receivedState) {
             return new Response("Invalid state.");
           }
 
