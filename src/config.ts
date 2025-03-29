@@ -1,9 +1,35 @@
 import convict from "convict";
+import bytes from "bytes";
 
 const playlists = ["library", "mix", "recommended"] as const;
 
 const coerceArray = (value: string) =>
   value.split(",").map((item) => item.trim());
+
+// Add a custom format for human-readable byte sizes
+convict.addFormat({
+  name: "bytes",
+  validate: (val) => {
+    if (typeof val === "string") {
+      if (bytes.parse(val) === null) {
+        throw new Error(
+          'must be a valid byte size string (e.g. "1MB", "512KB")'
+        );
+      }
+    } else if (typeof val !== "number") {
+      throw new Error("must be a string or number");
+    }
+  },
+  coerce: (val) => {
+    if (typeof val === "string") {
+      const parsed = bytes.parse(val);
+      if (parsed !== null) {
+        return parsed;
+      }
+    }
+    return val;
+  },
+});
 
 convict.addFormat({
   name: "usernames",
@@ -111,6 +137,20 @@ const config = convict({
     format: Boolean,
     default: true,
     env: "ENABLE_SEPERATE",
+  },
+  cache: {
+    file: {
+      doc: "The file to store the song cache in.",
+      format: String,
+      default: "",
+      env: "CACHE_FILE",
+    },
+    maxSize: {
+      doc: "The maximum size of the cache file. Accepts human-readable formats like '1MB', '500KB', etc.",
+      format: "bytes",
+      default: 0, // 0 means no limit
+      env: "CACHE_MAX_SIZE",
+    },
   },
 });
 

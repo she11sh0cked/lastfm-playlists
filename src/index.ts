@@ -1,6 +1,7 @@
 import { config } from "./config";
 import { PlaylistGenerator } from "./generator";
 import { createSpotify } from "./spotify";
+import { PersistentCache } from "./cache";
 
 const spotify = await createSpotify(
   config.get("spotify.clientId"),
@@ -12,8 +13,11 @@ const spotify = await createSpotify(
 
 const generator = new PlaylistGenerator(spotify);
 
-// Create a cache to store Spotify song lookups across playlist generations
-const songCache = new Map<string, string | null>();
+// Create a persistent cache to store Spotify song lookups
+const songCache = new PersistentCache<string | null>(
+  config.get("cache.file"),
+  config.get("cache.maxSize")
+);
 
 if (config.get("enableSeperate")) {
   // Create individual playlists for each user
@@ -40,3 +44,6 @@ if (config.get("enableBlend")) {
     );
   }
 }
+
+// Save cache to disk if needed
+await songCache.saveToFile();

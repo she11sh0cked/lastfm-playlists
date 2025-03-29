@@ -2,6 +2,7 @@ import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import chalk from "chalk-template";
 
 import type { Config } from "./config";
+import { PersistentCache } from "./cache";
 import { withRetry } from "./retry";
 
 type Track = {
@@ -14,8 +15,8 @@ type PlaylistDetails = {
   description: string;
 };
 
-// Cache type to store Spotify search results
-type SongCache = Map<string, string | null>;
+// Updated cache type to use PersistentCache
+type SongCache = PersistentCache<string | null>;
 
 export class PlaylistGenerator {
   constructor(private spotify: SpotifyApi) {}
@@ -30,7 +31,7 @@ export class PlaylistGenerator {
     const notFound = new Set<string>();
 
     // Initialize cache if not provided
-    const songCache = cache || new Map<string, string | null>();
+    const songCache = cache || new PersistentCache<string | null>();
 
     for (let page = 1; found.size < (amount ?? 0); page++) {
       const data = await fetch(

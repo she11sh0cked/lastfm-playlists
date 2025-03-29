@@ -21,6 +21,8 @@ services:
       - AMOUNT=100
       - ENABLE_BLENDED=true
       - ENEABLE_SEPARATE=true
+      - CACHE_FILE=/config/cache.json # optional: persist the song cache to a file
+      - CACHE_MAX_SIZE=1MB # optional: limit the cache file size to 1MB
       - SPOTIFY_CLIENT_ID=your-client-id
       - SPOTIFY_CLIENT_SECRET=your-client-secret
       - SPOTIFY_REDIRECT_URI=your-redirect-uri
@@ -40,6 +42,8 @@ docker run -d \
   -e AMOUNT=100 \
   -e ENABLE_BLENDED=true \
   -e ENABLE_SEPARATE=true \
+  -e CACHE_FILE=/config/cache.json \
+  -e CACHE_MAX_SIZE=1MB \
   -e SPOTIFY_CLIENT_ID=your-client-id \
   -e SPOTIFY_CLIENT_SECRET=your-client-secret \
   -e SPOTIFY_REDIRECT_URI=your-redirect-uri \
@@ -51,20 +55,22 @@ docker run -d \
 
 ## Parameters
 
-| Parameter                                     | Function                                                                         |
-| --------------------------------------------- | -------------------------------------------------------------------------------- |
-| `-p 3000`                                     | The port for the spotify callback.                                               |
-| `-e CRON=0 0 * * *`                           | The cron schedule to run the application. If not set, the application runs once. |
-| `-e LASTFM_USERNAMES=USERNAME`                | Your Last.fm username or a comma separated list of usernames.                    |
-| `-e LASTFM_PLAYLISTS=mix,library,recommended` | The playlists to create. Available: mix, library, recommended.                   |
-| `-e AMOUNT=100`                               | The amount of songs to add to the playlists.                                     |
-| `-e ENABLE_BLENDED=true`                      | Whether to create blended playlists from all users' tracks.                      |
-| `-e ENABLE_SEPARATE=true`                     | Whether to create seperate playlists for each user.                              |
-| `-e SPOTIFY_CLIENT_ID=CLIENT_ID`              | Your Spotify client ID.                                                          |
-| `-e SPOTIFY_CLIENT_SECRET=CLIENT_SECRET`      | Your Spotify client secret.                                                      |
-| `-e SPOTIFY_REDIRECT_URI=REDIRECT_URI`        | Your Spotify redirect URI.                                                       |
-| `-e SPOTIFY_TOKEN_FILE=/config/token.json`    | The token file to store the Spotify token.                                       |
-| `-v /config`                                  | Persistent storage for the token file.                                           |
+| Parameter                                     | Function                                                                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `-p 3000`                                     | The port for the spotify callback.                                                     |
+| `-e CRON=0 0 * * *`                           | The cron schedule to run the application. If not set, the application runs once.       |
+| `-e LASTFM_USERNAMES=USERNAME`                | Your Last.fm username or a comma separated list of usernames.                          |
+| `-e LASTFM_PLAYLISTS=mix,library,recommended` | The playlists to create. Available: mix, library, recommended.                         |
+| `-e AMOUNT=100`                               | The amount of songs to add to the playlists.                                           |
+| `-e ENABLE_BLENDED=true`                      | Whether to create blended playlists from all users' tracks.                            |
+| `-e ENABLE_SEPARATE=true`                     | Whether to create seperate playlists for each user.                                    |
+| `-e CACHE_FILE=/config/cache.json`            | Path to the file where song lookup cache will be stored.                               |
+| `-e CACHE_MAX_SIZE=1MB`                       | Maximum size of the cache file. Supports human-readable formats (e.g. '1MB', '500KB'). |
+| `-e SPOTIFY_CLIENT_ID=CLIENT_ID`              | Your Spotify client ID.                                                                |
+| `-e SPOTIFY_CLIENT_SECRET=CLIENT_SECRET`      | Your Spotify client secret.                                                            |
+| `-e SPOTIFY_REDIRECT_URI=REDIRECT_URI`        | Your Spotify redirect URI.                                                             |
+| `-e SPOTIFY_TOKEN_FILE=/config/token.json`    | The token file to store the Spotify token.                                             |
+| `-v /config`                                  | Persistent storage for the token file.                                                 |
 
 ## Running locally
 
