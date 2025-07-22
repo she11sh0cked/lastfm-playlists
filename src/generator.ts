@@ -99,10 +99,10 @@ export class PlaylistGenerator {
           songCache.set(key, uri);
         }
 
-        const wasFound = uri !== null;
+        const wasFound = uri !== null && uri.trim() !== "";
 
-        if (wasFound) {
-          found.add(uri!);
+        if (wasFound && uri) {
+          found.add(uri);
         } else {
           notFound.add(key);
         }
