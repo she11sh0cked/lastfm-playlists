@@ -34,9 +34,29 @@ export class PlaylistGenerator {
     const songCache = cache || new PersistentCache<string | null>();
 
     for (let page = 1; found.size < (amount ?? 0); page++) {
-      const data = await fetch(
+      const response = await fetch(
         `https://www.last.fm/player/station/user/${username}/${type}?page=${page}`
-      ).then((res) => res.json() as Promise<{ playlist: Track[] }>);
+      );
+
+      if (!response.ok) {
+        console.error(
+          `Failed to fetch page ${page}: ${response.status} ${response.statusText}`
+        );
+        break;
+      }
+
+      let data;
+      try {
+        data = (await response.json()) as { playlist: Track[] };
+      } catch (error) {
+        console.error(`Failed to parse JSON response for page ${page}:`, error);
+        break;
+      }
+
+      if (!data || !data.playlist || !Array.isArray(data.playlist)) {
+        console.error(`Invalid response structure for page ${page}:`, data);
+        break;
+      }
 
       if (data.playlist.length === 0) {
         break; // No more tracks to fetch
