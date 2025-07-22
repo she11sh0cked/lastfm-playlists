@@ -111,11 +111,13 @@ export class PlaylistGenerator {
           amount?.toString().length ?? 0
         );
 
-        // Use a different color for cached songs
+        // Log the track with appropriate color coding
+        const color = `${wasFound ? "green" : "red"}${fromCache ? ".dim" : ""}`;
+
         console.log(
-          chalk`{bold ${number}} {${
-            fromCache ? "cyan" : wasFound ? "green" : "red"
-          } ${key}}${fromCache ? chalk` {gray (cached)}` : ""}`
+          chalk`{bold ${number}} {${color} ${key}}${
+            fromCache ? chalk` {gray (cached)}` : ""
+          }`
         );
       }
     }
