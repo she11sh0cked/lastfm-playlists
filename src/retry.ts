@@ -28,7 +28,9 @@ const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
 };
 
 /**
- * Executes a function with retry logic for Spotify API rate limiting
+ * Executes a function with retry logic using exponential backoff.
+ * Retries on any error up to the configured number of attempts.
+ * If the error includes a `retry-after` header, that delay will be respected.
  * @param fn The function to execute with retry logic
  * @param options Retry strategy options
  * @returns The result of the function
@@ -47,17 +49,14 @@ export async function withRetry<T>(
     } catch (error: any) {
       attempt++;
 
-      // Check if it's a rate limiting error (HTTP 429)
-      const isRateLimitError = error.status === 429;
-
       // Check if we've hit the max retries
-      if (!isRateLimitError || attempt >= opts.maxRetries) {
+      if (attempt >= opts.maxRetries) {
         throw error;
       }
 
       // Get retry delay from header or use exponential backoff
       let retryAfterMs = backoffMs;
-      if (error.headers?.get("retry-after")) {
+      if (error?.headers?.get("retry-after")) {
         const retryAfterSec = parseInt(error.headers.get("retry-after") || "1");
         retryAfterMs = retryAfterSec * 1000;
       }
@@ -67,7 +66,7 @@ export async function withRetry<T>(
 
       if (opts.logging) {
         console.log(
-          chalk`{yellow Rate limited by Spotify API. Retrying in ${Math.round(
+          chalk`{yellow Retrying in ${Math.round(
             retryAfterMs / 1000
           )}s (attempt ${attempt}/${opts.maxRetries})}`
         );

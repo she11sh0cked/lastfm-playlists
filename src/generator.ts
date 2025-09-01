@@ -34,20 +34,26 @@ export class PlaylistGenerator {
     const songCache = cache || new PersistentCache<string | null>();
 
     for (let page = 1; found.size < (amount ?? 0); page++) {
-      const response = await fetch(
-        `https://www.last.fm/player/station/user/${username}/${type}?page=${page}`,
-        {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": "lastfm-playlists",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error(
-          `Failed to fetch page ${page}: ${response.status} ${response.statusText}`
+      let response: Response;
+      try {
+        response = await withRetry(() =>
+          fetch(
+            `https://www.last.fm/player/station/user/${username}/${type}?page=${page}`,
+            {
+              headers: {
+                Accept: "application/json",
+                "User-Agent": "lastfm-playlists",
+              },
+            }
+          ).then((res) => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}`);
+            }
+            return res;
+          })
         );
+      } catch (error) {
+        console.error(`Failed to fetch page ${page}:`, error);
         break;
       }
 
