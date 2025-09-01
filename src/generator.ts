@@ -35,7 +35,13 @@ export class PlaylistGenerator {
 
     for (let page = 1; found.size < (amount ?? 0); page++) {
       const response = await fetch(
-        `https://www.last.fm/player/station/user/${username}/${type}?page=${page}`
+        `https://www.last.fm/player/station/user/${username}/${type}?page=${page}`,
+        {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "lastfm-playlists",
+          },
+        }
       );
 
       if (!response.ok) {
