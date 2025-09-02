@@ -19,11 +19,11 @@ const songCache = new PersistentCache<string | null>(
   config.get("cache.maxSize")
 );
 
-if (config.get("enableSeperate")) {
+if (config.get("enableSeparate")) {
   // Create individual playlists for each user
   for await (const username of config.get("usernames")) {
     for await (const playlist of config.get("playlists")) {
-      await generator.createSeperatePlaylists(
+      await generator.createSeparatePlaylists(
         username,
         playlist,
         config.get("amount"),

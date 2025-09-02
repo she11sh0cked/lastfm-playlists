@@ -19,8 +19,8 @@ services:
       - LASTFM_USERNAMES=she11sh0cked
       - LASTFM_PLAYLISTS=library,mix,recommended
       - AMOUNT=100
-      - ENABLE_BLENDED=true
-      - ENEABLE_SEPARATE=true
+      - ENABLE_BLEND=true
+      - ENABLE_SEPARATE=true
       - CACHE_FILE=/config/cache.json # optional: persist the song cache to a file
       - CACHE_MAX_SIZE=1MB # optional: limit the cache file size to 1MB
       - SPOTIFY_CLIENT_ID=your-client-id
@@ -40,7 +40,7 @@ docker run -d \
   -e LASTFM_USERNAMES=she11sh0cked \
   -e LASTFM_PLAYLISTS=library,mix,recommended \
   -e AMOUNT=100 \
-  -e ENABLE_BLENDED=true \
+  -e ENABLE_BLEND=true \
   -e ENABLE_SEPARATE=true \
   -e CACHE_FILE=/config/cache.json \
   -e CACHE_MAX_SIZE=1MB \
@@ -62,8 +62,8 @@ docker run -d \
 | `-e LASTFM_USERNAMES=USERNAME`                | Your Last.fm username or a comma separated list of usernames.                          |
 | `-e LASTFM_PLAYLISTS=mix,library,recommended` | The playlists to create. Available: mix, library, recommended.                         |
 | `-e AMOUNT=100`                               | The amount of songs to add to the playlists.                                           |
-| `-e ENABLE_BLENDED=true`                      | Whether to create blended playlists from all users' tracks.                            |
-| `-e ENABLE_SEPARATE=true`                     | Whether to create seperate playlists for each user.                                    |
+| `-e ENABLE_BLEND=true`                        | Whether to create blended playlists from all users' tracks.                            |
+| `-e ENABLE_SEPARATE=true`                     | Whether to create separate playlists for each user.                                    |
 | `-e CACHE_FILE=/config/cache.json`            | Path to the file where song lookup cache will be stored.                               |
 | `-e CACHE_MAX_SIZE=1MB`                       | Maximum size of the cache file. Supports human-readable formats (e.g. '1MB', '500KB'). |
 | `-e SPOTIFY_CLIENT_ID=CLIENT_ID`              | Your Spotify client ID.                                                                |
