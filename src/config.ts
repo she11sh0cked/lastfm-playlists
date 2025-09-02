@@ -132,11 +132,11 @@ const config = convict({
     default: true,
     env: "ENABLE_BLEND",
   },
-  enableSeperate: {
-    doc: "Whether to create seperate playlists for each user.",
+  enableSeparate: {
+    doc: "Whether to create separate playlists for each user.",
     format: Boolean,
     default: true,
-    env: "ENABLE_SEPERATE",
+    env: "ENABLE_SEPARATE",
   },
   cache: {
     file: {

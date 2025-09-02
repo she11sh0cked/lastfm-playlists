@@ -196,7 +196,7 @@ export class PlaylistGenerator {
     }
   }
 
-  async createSeperatePlaylists(
+  async createSeparatePlaylists(
     username: Config["usernames"][number],
     type: Config["playlists"][number],
     amount?: Config["amount"],
